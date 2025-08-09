@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bounty Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #111827; /* Tailwind bg-gray-900 */
+      color: #e5e7eb; /* Tailwind text-gray-200 */
+    }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+    /* Separate M/Lvl box */
+    .unit-box {
+      min-width: 3.25rem;
+      height: 2.75rem; /* match input height */
+      background-color: #1f2937; /* Tailwind bg-gray-800 */
+      border: 2px solid #374151; /* Tailwind border-gray-600 */
+      border-left: none;
+      border-radius: 0 0.375rem 0.375rem 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-weight: 700;
+      font-size: 1.125rem; /* text-lg */
+      user-select: none;
+      margin-left: 0.125rem; /* small gap from input */
+      box-shadow: 0 0 6px rgba(0,0,0,0.4);
+    }
+    /* Input box rounded on left */
+    .input-box {
+      border-radius: 0.375rem 0 0 0.375rem;
+      border: 2px solid #374151; /* Tailwind border-gray-600 */
+      background-color: #1f2937; /* Tailwind bg-gray-800 */
+      color: white;
+      font-weight: 700;
+      font-size: 1.125rem; /* text-lg */
+      text-align: center;
+      padding: 0 0.75rem;
+      outline: none;
+      width: 10.5rem; /* slightly wider for comfort */
+      height: 2.75rem; /* match unit box height */
+      line-height: 2.75rem; /* vertically center text */
+      box-sizing: border-box;
+    }
+    .input-box:focus {
+      border-color: #3b82f6; /* Tailwind ring-blue-500 */
+      box-shadow: 0 0 0 2px #3b82f6;
+    }
+    /* Toggle button styles */
+    .toggle-btn {
+      background-color: #2563eb; /* Tailwind blue-600 */
+      color: white;
+      font-weight: 600;
+      padding: 0.5rem 1.5rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      user-select: none;
+      margin-bottom: 1rem;
+      transition: background-color 0.2s;
+      display: inline-block;
+      align-self: center;
+    }
+    .toggle-btn:hover {
+      background-color: #1e40af; /* Tailwind blue-700 */
+    }
+    /* Confirm button */
+    .confirm-btn {
+      background-color: #16a34a; /* Tailwind green-600 */
+      color: white;
+      font-weight: 700;
+      padding: 0.75rem 2rem;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      user-select: none;
+      margin-top: 1.5rem;
+      font-size: 1.25rem;
+      transition: background-color 0.2s, transform 0.1s;
+      display: inline-block;
+      align-self: center;
+    }
+    .confirm-btn:hover {
+      background-color: #15803d; /* Tailwind green-700 */
+      transform: scale(1.05);
+    }
+    .error-text {
+      color: #ef4444; /* Tailwind red-500 */
+      margin-top: 0.75rem;
+      font-weight: 600;
+      display: none;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen 1: Bounty Goal Input -->
+  <div
+    id="goal-screen"
+    class="flex flex-col items-center justify-center min-h-screen p-6"
+  >
+    <h1 class="text-3xl font-extrabold mb-8 text-center">
+      Bounty/Honor Goal
+    </h1>
+
+    <button id="toggle-mode" class="toggle-btn">Simple</button>
+
+    <div class="flex items-center">
+      <input
+        type="text"
+        id="goal-input"
+        placeholder="e.g. 3 or 2.5"
+        class="input-box"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+      />
+      <div id="goal-unit" class="unit-box">M</div>
+    </div>
+
+    <button id="goal-submit" class="confirm-btn">Confirm</button>
+
+    <p id="goal-error" class="error-text"></p>
+  </div>
+
+  <!-- Screen 2: Level Input -->
+  <div
+    id="level-screen"
+    class="hidden flex flex-col items-center justify-center min-h-screen p-6"
+  >
+    <h1 class="text-3xl font-extrabold mb-8 text-center">
+      Level
+    </h1>
+
+    <div class="flex items-center">
+      <input
+        type="number"
+        id="level-input"
+        placeholder="2650"
+        min="1"
+        max="2650"
+        class="input-box"
+        autocomplete="off"
+      />
+      <div class="unit-box">Lvl</div>
+    </div>
+
+    <button id="level-confirm" class="confirm-btn">Confirm</button>
+
+    <p id="level-error" class="error-text"></p>
+  </div>
+
+  <!-- Screen 3: Main Bounty Adjustment -->
+  <div
+    id="main-screen"
+    class="hidden flex flex-col items-center min-h-screen p-6 space-y-8"
+  >
+    <div class="text-center space-y-1">
+      <p id="bounty-display" class="text-5xl font-extrabold"></p>
+      <p id="bounty-simple-display" class="text-2xl text-white/30 font-semibold"></p>
+    </div>
+
+    <div class="grid grid-rows-2 grid-cols-10 gap-3 max-w-5xl w-full">
+      <!-- Increase bounty buttons row 1 -->
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="8575">8,575</button>
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="10700">10,700</button>
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="10800">10,800</button>
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="10900">10,900</button>
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="11000">11,000</button>
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="11500">11,500</button>
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="12000">12,000</button>
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="12500">12,500</button>
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="13000">13,000</button>
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="13500">13,500</button>
+
+      <!-- Increase bounty buttons row 2 -->
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="14000">14,000</button>
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="14500">14,500</button>
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="15000">15,000</button>
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="15500">15,500</button>
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="16000">16,000</button>
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="16500">16,500</button>
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="17000">17,000</button>
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="17500">17,500</button>
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="18000">18,000</button>
+      <button class="bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold" data-amount="18200">18,200</button>
+    </div>
+  </div>
+
+  <script>
+    let mode = "simple";
+    let bountyGoal = 2500000;
+    let level = 1;
+    let exactBounty = bountyGoal;
+
+    const goalScreen = document.getElementById("goal-screen");
+    const levelScreen = document.getElementById("level-screen");
+    const mainScreen = document.getElementById("main-screen");
+
+    const goalInput = document.getElementById("goal-input");
+    const goalUnit = document.getElementById("goal-unit");
+    const toggleModeBtn = document.getElementById("toggle-mode");
+    const goalSubmitBtn = document.getElementById("goal-submit");
+    const goalError = document.getElementById("goal-error");
+
+    const levelInput = document.getElementById("level-input");
+    const levelConfirmBtn = document.getElementById("level-confirm");
+    const levelError = document.getElementById("level-error");
+
+    const bountyDisplay = document.getElementById("bounty-display");
+    const bountySimpleDisplay = document.getElementById("bounty-simple-display");
+
+    function formatNumberWithCommas(x) {
+      return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    // Handle toggle between simple/exact
+    toggleModeBtn.addEventListener("click", () => {
+      if (mode === "simple") {
+        mode = "exact";
+        toggleModeBtn.textContent = "Exact";
+        goalInput.value = "";
+        goalInput.placeholder = "";
+      } else {
+        mode = "simple";
+        toggleModeBtn.textContent = "Simple";
+        goalInput.value = "";
+        goalInput.placeholder = "e.g. 3 or 2.5";
+      }
+      goalError.style.display = "none";
+    });
+
+    // Input validation and formatting
+    goalInput.addEventListener("input", () => {
+      if (mode === "simple") {
+        let val = goalInput.value;
+        val = val.replace(/[^0-9.]/g, "");
+        if (val.split(".").length > 2) val = val.split(".").slice(0, 2).join(".");
+        if (val !== "") {
+          let num = parseFloat(val);
+          if (isNaN(num)) {
+            goalError.style.display = "block";
+            goalError.textContent = "Invalid number";
+            return;
+          } else {
+            goalError.style.display = "none";
+          }
+          if (num < 2.5) {
+            goalError.style.display = "block";
+            goalError.textContent = "Minimum goal is 2.5M";
+            num = 2.5;
+            goalInput.value = "2.5";
+          } else if (num > 30) {
+            goalError.style.display = "block";
+            goalError.textContent = "Maximum goal is 30M";
+            num = 30;
+            goalInput.value = "30";
+          } else {
+            goalError.style.display = "none";
+          }
+        } else {
+          goalError.style.display = "none";
+        }
+      } else {
+        let val = goalInput.value.replace(/,/g, "");
+        val = val.replace(/[^0-9]/g, "");
+        if (val === "") {
+          goalInput.value = "";
+          goalError.style.display = "none";
+          return;
+        }
+        let num = parseInt(val, 10);
+        if (isNaN(num)) {
+          goalError.style.display = "block";
+          goalError.textContent = "Invalid number";
+          return;
+        }
+        if (num < 2500000) {
+          goalError.style.display = "block";
+          goalError.textContent = "Minimum goal is 2,500,000";
+          num = 2500000;
+        } else if (num > 30000000) {
+          goalError.style.display = "block";
+          goalError.textContent = "Maximum goal is 30,000,000";
+          num = 30000000;
+        } else {
+          goalError.style.display = "none";
+        }
+        goalInput.value = formatNumberWithCommas(num);
+      }
+    });
+
+    // Submit goal
+    goalSubmitBtn.addEventListener("click", () => {
+      let val = goalInput.value;
+      if (mode === "simple") {
+        let num = parseFloat(val);
+        if (isNaN(num) || num < 2.5 || num > 30) {
+          goalError.style.display = "block";
+          goalError.textContent = "Please enter a valid goal between 2.5 and 30.";
+          return;
+        }
+        bountyGoal = Math.round(num * 1000000);
+      } else {
+        val = val.replace(/,/g, "");
+        let num = parseInt(val, 10);
+        if (isNaN(num) || num < 2500000 || num > 30000000) {
+          goalError.style.display = "block";
+          goalError.textContent = "Please enter a valid goal between 2,500,000 and 30,000,000.";
+          return;
+        }
+        bountyGoal = num;
+      }
+      exactBounty = bountyGoal;
+      goalError.style.display = "none";
+      goalScreen.style.display = "none";
+      levelScreen.style.display = "flex";
+    });
+
+    // Level input clamp on input and blur
+    levelInput.addEventListener("input", () => {
+      let val = levelInput.value;
+      if (val === "") return;
+      let num = parseInt(val, 10);
+      if (isNaN(num)) return;
+      if (num > 2650) {
+        levelInput.value = "2650";
+      } else if (num < 1) {
+        levelInput.value = "1";
+      }
+    });
+    levelInput.addEventListener("blur", () => {
+      if (levelInput.value === "") levelInput.value = "1";
+    });
+
+    // Confirm level
+    levelConfirmBtn.addEventListener("click", () => {
+      let val = levelInput.value;
+      let num = parseInt(val, 10);
+      if (isNaN(num) || num < 1 || num > 2650) {
+        levelError.style.display = "block";
+        levelError.textContent = "Please enter a valid level between 1 and 2650.";
+        return;
+      }
+      levelError.style.display = "none";
+      level = num;
+      levelScreen.style.display = "none";
+      mainScreen.style.display = "flex";
+      updateBountyDisplay();
+    });
+
+    // Update bounty display on main screen
+    function updateBountyDisplay() {
+      bountyDisplay.textContent = formatNumberWithCommas(exactBounty);
+      const simpleVal = (exactBounty / 1000000).toFixed(1);
+      bountySimpleDisplay.textContent = `${simpleVal}M`;
+    }
+
+    // Buttons on main screen to increase bounty
+    const increaseButtons = mainScreen.querySelectorAll(
+      ".grid > button[data-amount]"
+    );
+    increaseButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const addAmount = parseInt(btn.dataset.amount, 10);
+        exactBounty += addAmount;
+        if (exactBounty > 30000000) exactBounty = 30000000;
+        updateBountyDisplay();
+      });
+    });
+  </script>
+</body>
+</html>
